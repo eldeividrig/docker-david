@@ -1,0 +1,53 @@
+version: '3.1'
+
+services:
+  mysql:
+    container_name: mysql
+    image: mysql:5.7.37
+    command: mysqld --sql_mode="" --max_allowed_packet=524288000 --thread_stack=1024M --explicit-defaults-for-timestamp=1
+    volumes:
+      - "./data/mysql:/var/lib/mysql"
+    restart: always
+    ports:
+      - 127.0.0.1:3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: helloworld
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: mysql
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    restart: always
+    links:
+      - mysql
+    ports:
+      - 8888:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_port=3306
+      - UPLOAD_LIMIT=10240M
+
+  redis:
+    container_name: redis
+    image: redis:6.2-alpine
+    # restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning
+    # command: redis-server --save 20 1 --loglevel warning --requirepass multitenant
+    volumes:
+      - "./data/redis:/data"
+
+  php:
+    container_name: apache-php
+    build: ./builds/php
+    image: apache2-php7.4
+    ports:
+      - 80:80
+    volumes:
+      - /home/david/Documentos/AguilasDev:/media/AguilasDev/
+      - ./data/apache:/var/www/html/
+      - ./conf/apache-php/sites-available:/etc/apache2/sites-available
+      - ./conf/apache-php/php.ini:/usr/local/etc/php/php.ini
